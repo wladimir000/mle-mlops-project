@@ -1,0 +1,61 @@
+﻿name: Taxi ML Training
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  train:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install uv and Python
+        uses: astral-sh/setup-uv@v6
+        with:
+          python-version: "3.13"
+          enable-cache: true
+
+      - name: Install dependencies
+        run: uv sync --locked
+
+      - name: Download and verify training data
+        run: |
+          mkdir -p data
+          curl --fail --location --retry 3 \
+            --output data/green_tripdata_2024-01.parquet \
+            https://d37ci6vzurychx.cloudfront.net/trip-data/green_tripdata_2024-01.parquet
+
+          echo "1512a953bed564ac68dcb622827424dfb4f68ad93c2a4572e50ef6ab0b09c1ad  data/green_tripdata_2024-01.parquet" | sha256sum --check -
+
+      - name: Verify Python imports
+        run: |
+          uv run python -c "from src.train import train; print('Training import OK')"
+
+      - name: Train model with MLflow
+        env:
+          MLFLOW_TRACKING_URI: sqlite:///mlflow.db
+        run: uv run python -m src.train
+
+      - name: Verify training artifacts
+        run: |
+          test -s models/model.joblib
+          test -s mlflow.db
+          uv run python -c "from pathlib import Path; assert Path('models/model.joblib').stat().st_size > 0; print('MODEL VERIFIED')"
+
+      - name: Upload training results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: taxi-training-results
+          path: |
+            models/model.joblib
+            mlflow.db
+            mlruns/
+            mlartifacts/
+          if-no-files-found: warn
+          retention-days: 7
