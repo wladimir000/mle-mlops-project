@@ -164,3 +164,98 @@ Run the notebook from the project root. Python commands use `uv run`, so the env
 - [Evidently Reports](https://docs.evidentlyai.com/docs/library/report): Compare reference and current datasets and export reports.
 - [Prometheus Overview](https://prometheus.io/docs/introduction/overview/): Understand metric scraping, time series, and PromQL queries.
 - [Grafana Provisioning](https://grafana.com/docs/grafana/latest/administration/provisioning/): Load data sources and dashboards from version-controlled files.
+
+## Taxi MLOps - API and Monitoring
+
+This project trains a model for NYC Green Taxi trip-duration
+estimation and demonstrates an MLOps workflow with DVC, MLflow,
+FastAPI, Prometheus, Grafana, and Evidently.
+
+### Environment
+
+Python 3.13 and uv are used for dependency management.
+
+```bash
+uv sync --locked
+```
+
+### Training
+
+The training pipeline uses January 2024 NYC Green Taxi data.
+
+```bash
+uv run python -m src.train
+```
+
+The training step creates a local model artifact. The model file
+is not committed to Git.
+
+The dataset is tracked with DVC. The configured DVC remote is
+local and may not be accessible on another machine. A fresh
+environment must obtain the dataset from an accessible source
+before training or monitoring.
+
+### Prediction API
+
+After training:
+
+```bash
+uv run uvicorn src.api:app --host 127.0.0.1 --port 8000
+```
+
+- `GET /health`: health check
+- `POST /predict`: prediction
+- `GET /metrics`: Prometheus metrics
+- `/docs`: interactive FastAPI documentation
+
+Successful prediction inputs are logged locally in SQLite.
+The SQLite file is excluded from Git.
+
+### Monitoring
+
+Prometheus and Grafana can be started with:
+
+```bash
+docker compose up -d
+```
+
+Evidently drift monitoring:
+
+```bash
+uv run python -m src.monitor_api
+```
+
+A calibrated drift evaluation requires at least 5,000 recorded
+API inputs. Insufficient data does not produce a drift decision.
+
+### Tests
+
+After creating the local model:
+
+```bash
+uv run python -m unittest tests.test_api tests.test_drift_gates -v
+```
+
+The independent end-to-end test is:
+
+```bash
+uv run python -m tests.e2e_independent_drift
+```
+
+It sends historical examples through a separate test API and
+validates baseline and synthetic-drift scenarios.
+
+The drift acceptance tests use small, committed JSON fixtures.
+Large HTML reports and local runtime artifacts are not committed.
+
+### Limitations
+
+The project is a historical-replay demonstration, not a
+production-ready pickup-time forecasting system. In particular,
+trip distance is observed during the trip and is not necessarily
+known at pickup time.
+
+Calibration thresholds are provisional. Real-world drift
+monitoring requires appropriate reference data and ongoing
+validation. Prediction drift alone does not establish changes
+in model accuracy.

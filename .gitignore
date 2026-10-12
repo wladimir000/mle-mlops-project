@@ -167,3 +167,12 @@ cython_debug/
 /mlflow.db*
 
 /.dvc-storage/
+/data/api_predictions.sqlite3*
+/src/*.py.*.bak
+/monitoring/reports/
+/models/
+/monitoring/backups/
+*.bak
+*.bak.*
+*.py.*.bak
+*.pyc

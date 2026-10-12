@@ -1,0 +1,41 @@
+{
+  "sample_size_each_group": 5000,
+  "calibration_repeats": 40,
+  "holdout_repeats": 40,
+  "training_validation_pools_disjoint": true,
+  "distance_methods": {
+    "PULocationID": "scipy Jensen-Shannon distance",
+    "DOLocationID": "scipy Jensen-Shannon distance",
+    "trip_distance": "Wasserstein distance / reference std"
+  },
+  "threshold_method": "95th percentile of calibration distances",
+  "candidate_thresholds": {
+    "PULocationID": 0.10029643980352047,
+    "DOLocationID": 0.11847041928450883,
+    "trip_distance": 0.04158417299649624
+  },
+  "holdout_alarm_rate_by_feature": {
+    "PULocationID": 0.05,
+    "DOLocationID": 0.1,
+    "trip_distance": 0.05
+  },
+  "holdout_dataset_alarm_rate_2_of_3": 0.025,
+  "positive_control_scores": {
+    "PULocationID": 0.0994306268299388,
+    "DOLocationID": 0.5882841157134259,
+    "trip_distance": 1.9284120369857665
+  },
+  "positive_control_detected_by_feature": {
+    "PULocationID": false,
+    "DOLocationID": true,
+    "trip_distance": true
+  },
+  "positive_control_dataset_detected_2_of_3": true,
+  "positive_control": "trip_distance x3 (clipped) and 80% dropoff destinations set to common existing ID",
+  "caveats": [
+    "Calibration uses SciPy, not the native Evidently threshold configuration.",
+    "Repeated random splits reuse records inside each disjoint pool.",
+    "A synthetic shift does not demonstrate real-world model degradation.",
+    "Candidate thresholds are not yet installed into Evidently."
+  ]
+}

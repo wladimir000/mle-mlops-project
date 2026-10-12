@@ -1,0 +1,107 @@
+{
+    "id":  null,
+    "uid":  "taxi-api-overview",
+    "title":  "Taxi API Monitoring",
+    "tags":  [
+                 "mlops",
+                 "taxi",
+                 "fastapi"
+             ],
+    "timezone":  "browser",
+    "schemaVersion":  39,
+    "version":  1,
+    "refresh":  "5s",
+    "time":  {
+                 "from":  "now-15m",
+                 "to":  "now"
+             },
+    "panels":  [
+                   {
+                       "id":  1,
+                       "title":  "Requests per second",
+                       "type":  "timeseries",
+                       "datasource":  {
+                                          "type":  "prometheus",
+                                          "uid":  "taxi-prometheus"
+                                      },
+                       "targets":  [
+                                       {
+                                           "expr":  "sum by (endpoint) (rate(taxi_api_requests_total[1m]))",
+                                           "legendFormat":  "{{endpoint}}",
+                                           "refId":  "A"
+                                       }
+                                   ],
+                       "gridPos":  {
+                                       "h":  8,
+                                       "w":  12,
+                                       "x":  0,
+                                       "y":  0
+                                   }
+                   },
+                   {
+                       "id":  2,
+                       "title":  "Error rate (%)",
+                       "type":  "timeseries",
+                       "datasource":  {
+                                          "type":  "prometheus",
+                                          "uid":  "taxi-prometheus"
+                                      },
+                       "targets":  [
+                                       {
+                                           "expr":  "100 *\n(\n  (sum(rate(taxi_api_requests_total{status=~\"5..\"}[1m])) or vector(0))\n  /\n  clamp_min(sum(rate(taxi_api_requests_total[1m])), 0.000001)\n)",
+                                           "legendFormat":  "5xx errors %",
+                                           "refId":  "A"
+                                       }
+                                   ],
+                       "gridPos":  {
+                                       "h":  8,
+                                       "w":  12,
+                                       "x":  12,
+                                       "y":  0
+                                   }
+                   },
+                   {
+                       "id":  3,
+                       "title":  "Request latency P95 (seconds)",
+                       "type":  "timeseries",
+                       "datasource":  {
+                                          "type":  "prometheus",
+                                          "uid":  "taxi-prometheus"
+                                      },
+                       "targets":  [
+                                       {
+                                           "expr":  "histogram_quantile(0.95, sum by (le, endpoint) (rate(taxi_api_request_duration_seconds_bucket[5m])))",
+                                           "legendFormat":  "{{endpoint}}",
+                                           "refId":  "A"
+                                       }
+                                   ],
+                       "gridPos":  {
+                                       "h":  8,
+                                       "w":  12,
+                                       "x":  0,
+                                       "y":  8
+                                   }
+                   },
+                   {
+                       "id":  4,
+                       "title":  "Total requests",
+                       "type":  "stat",
+                       "datasource":  {
+                                          "type":  "prometheus",
+                                          "uid":  "taxi-prometheus"
+                                      },
+                       "targets":  [
+                                       {
+                                           "expr":  "sum(taxi_api_requests_total)",
+                                           "refId":  "A"
+                                       }
+                                   ],
+                       "gridPos":  {
+                                       "h":  8,
+                                       "w":  12,
+                                       "x":  12,
+                                       "y":  8
+                                   }
+                   }
+               ]
+}
